@@ -2,12 +2,7 @@
 
 **This is a CakePHP plugin for 4.x branch.**
 
-The main idea of this plugin is to :
-
-- remotely leverage power of CakePHP query builder to configure advanced data queries through inbound URL parameters
-- provides a quick way to define which fields and/or associated models will be accessible for CRUD operations.
-
-Except for pagination, CakePHP framework is lacking tools to quicky achieve these goals. The plugin by itself is fairly agnostic about endpoints routing logic.
+The main idea of this plugin is to remotely leverage power of CakePHP query builder to configure advanced data queries through inbound URL parameter. Except for pagination, CakePHP framework is lacking tools to quicky achieve these goals. The plugin by itself is fairly agnostic about endpoints routing logic.
 
 - [Cake as a Pie](#cake-as-a-pie)
   - [Quick overview](#quick-overview)
