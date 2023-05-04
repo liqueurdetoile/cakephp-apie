@@ -1,0 +1,39 @@
+{
+  "name": "liqueurdetoile/cakephp-apie",
+  "description": "This Cakephp plugin alloow to easily handle API calls within controllers and supports extended syntax to control data queries through url parameters",
+  "type": "cakephp-plugin",
+  "license": "MIT",
+  "autoload": {
+    "psr-4": {
+      "Lqdt\\CakephpApie\\": "src/",
+      "Lqdt\\CakephpApie\\Test\\": "tests/"
+    }
+  },
+  "authors": [
+    {
+      "name": "Liqueur de Toile",
+      "email": "contact@liqueurdetoile.com"
+    }
+  ],
+  "minimum-stability": "stable",
+  "require": {
+    "php": "^7.2|^8.0",
+    "cakephp/cakephp": "^4"
+  },
+  "require-dev": {
+    "phpunit/phpunit": "^6|^8.5|^9.3",
+    "phpstan/phpstan": "^0.10|^1.8",
+    "phpstan/extension-installer": "^1.1",
+    "cakephp/cakephp-codesniffer": "^4.5",
+    "cakephp/migrations": "^2.4|^3.2",
+    "cakedc/cakephp-phpstan": "^2.0",
+    "phpstan/phpstan-phpunit": "^1.2",
+    "vierge-noire/cakephp-fixture-factories": "^2.7"
+  },
+  "config": {
+    "allow-plugins": {
+      "dealerdirect/phpcodesniffer-composer-installer": true,
+      "phpstan/extension-installer": true
+    }
+  }
+}
