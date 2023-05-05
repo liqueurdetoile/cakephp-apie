@@ -2,7 +2,6 @@
 declare(strict_types=1);
 
 use Cake\Core\Configure;
-use Cake\Core\Plugin;
 use Cake\Datasource\ConnectionManager;
 use Cake\Log\Log;
 use Cake\Routing\Router;
@@ -63,8 +62,6 @@ Log::setConfig('queries', [
 
 Router::reload();
 Security::setSalt('YJfIxfs2guVoUubWDYhfk3b0qyJfIxfs2guwv6iR2G0FgaC9mj');
-
-Plugin::getCollection()->add(new \Lqdt\CakephpApie\Plugin());
 
 $_SERVER['PHP_SELF'] = '/';
 
