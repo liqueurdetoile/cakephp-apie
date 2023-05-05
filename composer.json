@@ -1,6 +1,6 @@
 {
   "name": "liqueurdetoile/cakephp-apie",
-  "description": "This Cakephp plugin alloow to easily handle API calls within controllers and supports extended syntax to control data queries through url parameters",
+  "description": "This Cakephp plugin allows to easily handle API calls within controllers and supports extended syntax to control data queries through url parameters",
   "type": "cakephp-plugin",
   "license": "MIT",
   "autoload": {
