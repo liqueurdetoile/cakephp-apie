@@ -1,3 +1,5 @@
+<p align="center"><a href="https://liqueurdetoile.com" target="\_blank"><img src="https://hosting.liqueurdetoile.com/logo_lqdt.png" alt="Liqueur de Toile"></a></p>
+
 # Cake as a Pie
 
 **This is a CakePHP plugin for 4.x branch.**
@@ -6,11 +8,13 @@ The main idea of this plugin is to remotely leverage power of CakePHP query buil
 
 - [Cake as a Pie](#cake-as-a-pie)
   - [Quick overview](#quick-overview)
-  - [Reference](#reference)
-    - [Used query parameter](#used-query-parameter)
-    - [Component options](#component-options)
-    - [Component methods](#component-methods)
+  - [Installation](#installation)
+  - [Component options](#component-options)
+  - [Component methods](#component-methods)
   - [Query descriptor syntax](#query-descriptor-syntax)
+    - [Query expressions](#query-expressions)
+    - [SQL functions](#sql-functions)
+    - [Closures](#closures)
 
 ## Quick overview
 
@@ -36,7 +40,7 @@ $query = $this->Articles
 $this->set('articles', $this->paginate($query));
 ```
 
-That's great, but you must manually handle routes and/or parameters to add more features to your api. Though it can be needed in some cases for security reasons, most of the time it will be great to be able to refine a query from client side. With this plugin, you can simply do this :
+Great, but to provide additional features, you'll have to manually handle routes and/or parameters per endpoint. Though it can be needed in some cases for security reasons, most of the time it will be great to be able to refine a query from client side. With this plugin, you can simply do this :
 
 ```php
 // In your index method of your ArticlesController endpoint
@@ -49,54 +53,91 @@ $query = $this->Api
 $this->set('articles', $this->paginate($query));
 ```
 
-The `q` query parameter when url and json decoded turns into this PHP array :
+The `q` query parameter when url and json decoded turns into this PHP array which is the query descriptor :
 
 ```php
 [
-    'innerJoinWith' => ['Authors', () => ['where' => [['Author.name' => 'Smith']]]],
-    'where' => ['between' => ['written','2020-01-01','2020-12-31']],
+    'innerJoinWith' => ['Authors', "()" => ['where' => [['Author.name' => 'Smith']]]],
+    'where' => ["()" => ['between' => ['written','2020-01-01','2020-12-31']]],
     'order' => [['written' => 'ASC']],
 ]
 ```
 
-Relying on query builder ability to chain and provide callbacks, you can write mostly any advanced query this way. Logic is quite simple : when an associative array is found, plugin will try to match key to an available method in the current executive context (query, query expression or function builder) and use the value as argument in a `call_user_func_array` call.
+It might be more comprehensive on JSON format :
 
-> **TIP** Any array as single argument must have double brackets to avoid parsing issues
-
-> **TIP** Due to array key limitations, the descriptor syntax does not support multiple calls of the same command
-
-See below for more informations about the building of a usable [query descriptor](#query-descriptor-syntax).
-
-See CakePHP [query builder](https://book.cakephp.org/4/en/orm/query-builder.html) for more informations about available features.
-
-## Reference
-
-### Used query parameter
-
-| Default parameter name | Expected encoding | Setter                        | Description                                    |
-| :--------------------: | :---------------: | ----------------------------- | ---------------------------------------------- |
-|          `q`           |      `JSON`       | `ApiComponent::setQueryParam` | Contains the directives for the query builder. |
-
-Parameter`s name can be changed when initializing component (see below) or for a specific request through its setter.
-
-### Component options
-
-When initializing componenent, you can permanently alter the used query parameters name by submitting mapped default ones :
-
-```php
-    // In your controller
-    $this->loadComponent('Lqdt/CakephpApie.Api', [
-        'q' => 'whatever',
-    ]);
+```json
+{
+  "innerJoinWith": {
+    "0": "Authors",
+    "()": {
+      "where": [{ "Author.name": "Smith" }]
+    }
+  },
+  "where": {
+    "()": {
+      "between": ["written", "2020-01-01", "2020-12-31"]
+    }
+  },
+  "order": [{ "written": "ASC" }]
+}
 ```
 
-Component will now look into `whatever` query parameter to find a query descriptor.
+Relying on query builder ability to chain and provide callbacks, you can remotely configure a wide range of advanced queries this way. See below for more informations about the building of a usable [query descriptor](#query-descriptor-syntax). See CakePHP [query builder](https://book.cakephp.org/4/en/orm/query-builder.html) for more informations about available features.
 
-### Component methods
+## Installation
+
+Plugin is available through composer :
+
+```bash
+composer require liqueurdetoile/cakephp-apie
+```
+
+There's only a component in this plugin, therefore you're not required to explicitly add plugin at bootstrap step.
+
+In your controller(s) that will use the component, simply load it during `initialize` hook :
+
+```php
+// In your controller
+public function initialize(): void
+{
+    parent::initialize();
+    $this->loadComponent('Lqdt/CakephpApie.Api');
+}
+
+// And use it through Api method
+public function index() {
+    $articles = $this->Api
+        ->use('Articles')
+        ->find()
+        ->all()
+
+    // ...
+}
+```
+
+## Component options
+
+When initializing component, you can permanently alter the used query parameters name by submitting mapped default ones :
+
+```php
+// In your controller
+$this->loadComponent('Lqdt/CakephpApie.Api', [
+    'q' => 'whatever', // Permanently remap the query parameter monitored in URL to this value
+    'allowAll' => true, // Allow any associated data to be requested. Not recommended unless you know what you're doing
+]);
+```
+
+With this config, component will now look into `whatever` query parameter to find a query descriptor and will not check for allowance when associated data is requested.
+
+## Component methods
 
 `ApiComponent::use(\Cake\ORM\Table\|string $model) : self`
 
 Instruct component to use given table as base for the request. You can either provide a `Table` instance or its name in `TableRegistry`.
+
+`ApiComponent::setQueryParam(string $name) : self`
+
+Component will try to find a query descriptor from the `$name` key in query string instead of the default `q` key.
 
 `ApiComponent::allow(string|string[] $associations) : self`
 
@@ -104,149 +145,140 @@ Configure component to allow the use of given associations by their names. Dotte
 
 > **TIP** : Allowing a nested association automatically allows all intermediate associations in the path
 
+`ApiComponent::allowAll() : self`
+
+Disable association check for the current request.
+
+> **TIP** : Allowing any associated data to be fetched can be a very bad idea in most cases
+
 `ApiComponent::find() : \Cake\ORM\Query`
 
-Returns a query object which clauses have been initialized based on url parameter. It accepts the same parameters than any regular `find` call.
+Returns a query which have been initialized based on descriptor provided in url. It accepts the same parameters than any regular `find` call.
 
 `ApiComponent::configure(\Cake\ORM\Query $query, array $descriptor) : \Cake\ORM\Query`
 
-Returns a query object which clauses have been initialized based on url parameter. It accepts the same parameters than regular `find` call.
+Returns a query object which clauses have been initialized based on descriptor.
+
+> **TIP** You can use this feature if you're not planning to use url query parameter as descriptor source
 
 ## Query descriptor syntax
 
 A query descriptor is an array describing how to configure a query. Any available callable on a query can be used.
 
+A very basic descriptor will look like :
+
 ```php
-// This is extracted in query parameter by the component
-$descriptor = [
-    'where' => [['is_great' => true]],  // Notice double brackets use
-];
+[
+    "query_method1" => [/** arguments */]
+    "query_method2" => [/** arguments */]
+]
 
-$descriptor = [
-    'where' => ['is_great' => true],
-];
-
-// It will be used to process query like so
-$query = $Table->find();
-call_user_func_array([$query, 'where', [['is_great' => true]]);
-// That is analog to
-$query->where(['is_great' => true]);
+// This will be used this way :
+call_user_func_array([$query, "query-method1"], [/** arguments */];
+call_user_func_array([$query, "query-method2"], [/** arguments */];
 ```
 
-You can also pass nested parameter(s) :
+Plugin expects that provided arguments are directly usable for `call_user_func_array`, therefore they must be wrapped into an array.
+
+If you need to call the same method multiple times, simply add `+` as needed. They will be trimmed during parsing :
 
 ```php
-// This is extracted in query parameter by the component
-$descriptor = [
-    'contain' => [[ // Notice double brackets use
-            'Childs' => [
-                'sort' => [
-                    'Childs.created' => 'DESC'
-                ]
-            ]
-    ]],
-];
+[
+    "query_method" => [/** arguments */]
+    "+query_method" => [/** arguments */]
+    "++query_method" => [/** arguments */]
+]
 
-// It will be used to process query like so
-$query = $Table->find();
-call_user_func_array([$query, 'contain', [['Childs' => ['sort' => ['Childs.created' => 'DESC']]]]);
+// This will be used this way :
+call_user_func_array([$query, "query-method"], [/** arguments */];
+call_user_func_array([$query, "query-method"], [/** arguments */];
+call_user_func_array([$query, "query-method"], [/** arguments */];
 ```
 
-> **TIP** When the component finds an indexed array, it will use `call_user_func_array` on current context and pass the array. Therefore, do not forget to enclose your array-like parameters into brackets, otherwise the component will try (in that case) to find a `Childs` method on the query object and will raise an error.
+### Query expressions
 
-You may also want/have to use callback closure for more advanced query setup. Simply use a key named `()` to enter callback mode :
+You can tell plugin that you're willing to use a query expression by using `newExpr()` special key :
 
 ```php
-// This time we'll start on the expected result
-$query = $Table->find()->contain('Childs', function($q) {
-    return $q->order(['Childs.created' => 'DESC']);
-})
+[
+    'where' => [
+        'newExpr()' => [
+            'between' => ['date', '2020-01-01', '2020-12-31']
+        ]
+    ]
+];
 
-// The descriptor for this query will be
-$descriptor = [
+// turns into
+call_user_func([$query, 'where'], [
+    call_user_func([$query->newExpr(), 'between'], ['date', '2020-01-01', '2020-12-31'])
+]);
+```
+
+### SQL functions
+
+You can also use SQL functions with `func()` special key :
+
+```php
+[
+    'select' => [
+        ['count' => [
+            'func()' => [
+                'count' => ['*'],
+            ],
+        ]],
+    ],
+];
+
+// turns into
+call_user_func([$query, 'select'], [
+    call_user_func([$query->func(), 'count'], ['*'])
+]);
+```
+
+### Closures
+
+Finally, you can tell plugin that you want to use a closure by using `()` special key. Except for associations closure, a query expression will be available and used to process nested descriptor.
+
+```php
+[
+    'where' => [
+        '()' => [
+            'between' => ['date', '2020-01-01', '2020-12-31']
+        ]
+    ]
+];
+
+// turns into
+call_user_func([$query, 'where', [
+    function (QueryExpression, $e) {
+        call_user_func([$e, 'between'], ['date', '2020-01-01', '2020-12-31']);
+
+        return $e;
+    }
+]]);
+
+```
+
+For associations, plugin will apply nested descriptor to the subquery in the closure :
+
+```php
+[
     'contain' => [
         'Childs',
         '()' => [
-            'order' => [['Childs.created' => 'DESC']],  // Notice double brackets use
-        ]
-    ],
-];
-```
-
-In a closure, the component will first try to apply next descriptor nodes to QueryExpression (if one available) and fallback on Query provided by local scope.
-
-Lastly, the `func()` and `newExpr()` keys will also change local scope to, respectively, function builder and query expression. Let's see in action from an advanced pattern found on CakePHP cookbook :
-
-```php
-$query = $articles->find()->where(function (QueryExpression $exp, Query $query) {
-    // Use add() to add multiple conditions for the same field.
-    $author = $query->newExpr()->or(['author_id' => 3])->add(['author_id' => 2]);
-    $published = $query->newExpr()->and(['published' => true, 'view_count' => 10]);
-
-    return $exp->or([
-        'promoted' => true,
-        $query->newExpr()->and([$author, $published])
-    ]);
-});
-
-// the descriptor for this one will be :
-$descriptor = [
-    'where' => [
-        '()' => [
-            'or' => [ // This is available on scoped QueryExpression
-                ['promoted' => true],
-                'newExpr()' => [ // This is available on scoped Query
-                    'and' => [
-                        'newExpr()' => [
-                            'or' => ['author_id' => 3],
-                            'add' => ['author_id' => 2],
-                        ],
-                        'newExpr()' => [
-                            'and' => [['published' => true, 'view_count' => 10]],  // Notice the double brackets here
-                        ]
-                    ]
-                ]
-            ]
+            'where' => [['Childs.is_great' => true]]
         ]
     ]
 ];
-```
 
-```php
-$query->where(['created' => true], true);
+// turns into
+call_user_func([$query, 'contain', [
+    'Childs',
+    function (Query $q) {
+        call_user_func([$q, 'where'], [['Childs.is_great' => true]]);
 
-'where' => [
-    ['created' => true],
-    true
-]
+        return $q;
+    }
+]]);
 
-call_user_func_array($query->where, [['created' => true], true])
-
-$query->where(function($e) {
-return $e->eq('created', true);
-})
-
-'where' => [
-    '()' => [
-        'eq' => ['created', true];
-    ]
-]
-
-$q->select(['count' => $q->func()->count('*')])
-
-[
-    'select' => [
-        [
-            'count' => [
-                'func()' => [
-                    'count' => ['*']
-                ]
-            ]
-        ]
-    ]
-]
-
-call_user_func($query->select, [
-    ['count' => ]
-]);
 ```
