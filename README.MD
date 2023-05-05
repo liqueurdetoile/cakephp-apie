@@ -213,8 +213,8 @@ You can tell plugin that you're willing to use a query expression by using `newE
 ];
 
 // turns into
-call_user_func([$query, 'where'], [
-    call_user_func([$query->newExpr(), 'between'], ['date', '2020-01-01', '2020-12-31'])
+call_user_func_array([$query, 'where'], [
+    call_user_func_array([$query->newExpr(), 'between'], ['date', '2020-01-01', '2020-12-31'])
 ]);
 ```
 
@@ -234,8 +234,8 @@ You can also use SQL functions with `func()` special key :
 ];
 
 // turns into
-call_user_func([$query, 'select'], [
-    call_user_func([$query->func(), 'count'], ['*'])
+call_user_func_array([$query, 'select'], [
+    call_user_func_array([$query->func(), 'count'], ['*'])
 ]);
 ```
 
@@ -253,9 +253,9 @@ Finally, you can tell plugin that you want to use a closure by using `()` specia
 ];
 
 // turns into
-call_user_func([$query, 'where', [
+call_user_func_array([$query, 'where', [
     function (QueryExpression, $e) {
-        call_user_func([$e, 'between'], ['date', '2020-01-01', '2020-12-31']);
+        call_user_func_array([$e, 'between'], ['date', '2020-01-01', '2020-12-31']);
 
         return $e;
     }
@@ -276,10 +276,10 @@ For associations, plugin will apply nested descriptor to the subquery in the clo
 ];
 
 // turns into
-call_user_func([$query, 'contain', [
+call_user_func_array([$query, 'contain', [
     'Childs',
     function (Query $q) {
-        call_user_func([$q, 'where'], [['Childs.is_great' => true]]);
+        call_user_func_array([$q, 'where'], [['Childs.is_great' => true]]);
 
         return $q;
     }
