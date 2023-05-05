@@ -2,38 +2,71 @@ name: CI
 
 on:
   push:
-    branches: [ "master", "next" ]
+    branches: ["master", "next"]
   pull_request:
-    branches: [ "master", "next" ]
+    branches: ["master", "next"]
 
 permissions:
   contents: read
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
 
+    strategy:
+      matrix:
+        php-version: ["7.4", "8.0", "latest"]
+        coverage: ["no-coverage"]
+        include:
+          - php-version: "7.4"
+            coverage: "pcov"
+        exclude:
+          - php-version: "7.4"
+            coverage: "no-coverage"
+
     steps:
-    - uses: actions/checkout@v3
+      - uses: actions/checkout@v3
 
-    - name: Validate composer.json and composer.lock
-      run: composer validate --strict
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php-version }}
+          extensions: pdo_sqlite
+          tools: cs2pr
+          coverage: ${{ matrix.coverage }}
 
-    - name: Cache Composer packages
-      id: composer-cache
-      uses: actions/cache@v3
-      with:
-        path: vendor
-        key: ${{ runner.os }}-php-${{ hashFiles('**/composer.lock') }}
-        restore-keys: |
-          ${{ runner.os }}-php-
+      - name: Validate composer.json and composer.lock
+        run: composer validate --strict
 
-    - name: Install dependencies
-      run: composer install --prefer-dist --no-progress
+      - name: Cache Composer packages
+        id: composer-cache
+        uses: actions/cache@v3
+        with:
+          path: vendor
+          key: ${{ runner.os }}-php-${{ hashFiles('**/composer.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-php-
 
-    - name: Run test suite
-      run: composer run-script test
-      
-    - name: Run PHPStan
-      run: composer run-script stan
+      - name: Install dependencies
+        run: composer install --prefer-dist --no-progress
+
+      - name: Run test suite (no coverage)
+        if: matrix.coverage == 'no-coverage'
+        run: composer run-script test
+
+      - name: Run test suite (coverage)
+        if: matrix.coverage == 'pcov'
+        run: |
+          composer run-script test-coverage
+          composer global require php-coveralls/php-coveralls
+          php-coveralls --coverage_clover=logs/clover.xml --json_path=logs/coveralls-upload.json -v
+        env:
+          COVERALLS_REPO_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Run PHPStan
+        if: matrix.coverage == 'pcov'
+        run: composer run-script stan
+
+      - name: Run PHP CodeSniffer
+        if: matrix.coverage == 'pcov'
+        run: vendor/bin/phpcs --report=checkstyle src/ tests/ | cs2pr
