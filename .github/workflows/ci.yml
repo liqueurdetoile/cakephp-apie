@@ -15,7 +15,7 @@ jobs:
 
     strategy:
       matrix:
-        php-version: ["7.3", "7.4", "8.0", "latest"]
+        php-version: ["7.4", "8.0", "latest"]
         coverage: ["no-coverage"]
         include:
           - php-version: "7.4"
