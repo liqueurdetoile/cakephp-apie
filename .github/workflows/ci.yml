@@ -53,7 +53,7 @@ jobs:
       - name: Run test suite (coverage)
         if: matrix.coverage == 'pcov'
         run: |
-          composer run-script coverage-test
+          composer run-script test-coverage
           composer global require php-coveralls/php-coveralls
           php-coveralls --coverage_clover=logs/clover.xml --json_path=logs/coveralls-upload.json -v
 
