@@ -39,6 +39,25 @@ class ApiComponent extends Component
     protected $_queryParam = 'q';
 
     /**
+     * Flag used to disable association allowance check
+     *
+     * @var bool
+     */
+    protected $_allowAll = false;
+
+    /**
+     * Initialize component and set options
+     *
+     * @param array $config Configuration for component
+     * @return void
+     */
+    public function initialize(array $config = []): void
+    {
+        $this->_queryParam = $config['q'] ?? 'q';
+        $this->_allowAll = $config['allowAll'] ?? false;
+    }
+
+    /**
      * Returns the current model used or raises an exception if missing
      *
      * @return \Cake\ORM\Table
@@ -112,13 +131,30 @@ class ApiComponent extends Component
     }
 
     /**
-     * Checks if a required model path is within allowed path
+     * Disable or enable association check for this component instance
+     *
+     * @param bool $enabled If `true`, association check will be disabled
+     * @return self
+     */
+    public function allowAll(bool $enabled = true): self
+    {
+        $this->_allowAll = $enabled;
+
+        return $this;
+    }
+
+    /**
+     * Checks if a required model path is within allowed paths
      *
      * @param string $path Path to check
      * @return bool
      */
     public function isAllowed(string $path): bool
     {
+        if ($this->_allowAll) {
+            return true;
+        }
+
         foreach ($this->_allowed as $p) {
             if (strpos($p, $path) !== false) {
                 return true;
@@ -139,7 +175,7 @@ class ApiComponent extends Component
     {
         $query = $this->getModel()->find($type, $options);
         /** @var string $q */
-        $q = $this->_getRequest()->getQuery($this->_queryParam) ?: '{}';
+        $q = $this->_getRequest()->getQuery($this->_queryParam) ?? '{}';
         $descriptor = json_decode($q, true);
 
         $this->configure($query, $descriptor);
@@ -157,6 +193,8 @@ class ApiComponent extends Component
     public function configure(Query &$query, array $descriptor): Query
     {
         foreach ($descriptor as $key => $nodes) {
+            $key = trim($key, '+');
+
             if (!method_exists($query, $key)) {
                 throw new BadRequestException("Unknown method {$key} requested on Query");
             }
@@ -269,6 +307,8 @@ class ApiComponent extends Component
     protected function _processExpression(array $nodes, QueryExpression $exp, Query $query): QueryExpression
     {
         foreach ($nodes as $key => $node) {
+            $key = trim($key, '+');
+
             if (!method_exists($exp, $key)) {
                 throw new BadRequestException("Invalid method {$key} requested on QueryExpression");
             }

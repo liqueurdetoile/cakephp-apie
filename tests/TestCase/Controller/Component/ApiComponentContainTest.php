@@ -22,6 +22,49 @@ class ApiComponentContainTest extends ApiTestCase
             ->find();
     }
 
+    public function testAllowAllOption(): void
+    {
+        $agents = AgentFactory::make(5)->withClients(null, 10)->persist();
+        $controller = $this->getQueryController([
+            'contain' => [['Clients']],
+        ], ['allowAll' => true]);
+
+        $agent = $controller->Api
+            ->use('Agents')
+            ->find()
+            ->first();
+
+        /** @var \Lqdt\CakephpApie\Test\Model\Entity\TestEntityInterface $agent */
+        $this->assertNotEmpty($agent->clients);
+        $this->assertEquals(10, count($agent->clients));
+    }
+
+    public function testAllowAll(): void
+    {
+        $agents = AgentFactory::make(5)->withClients(null, 10)->persist();
+        $controller = $this->getQueryController([
+            'contain' => [['Clients']],
+        ]);
+
+        $agent = $controller->Api
+            ->allowAll()
+            ->use('Agents')
+            ->find()
+            ->first();
+
+        /** @var \Lqdt\CakephpApie\Test\Model\Entity\TestEntityInterface $agent */
+        $this->assertNotEmpty($agent->clients);
+        $this->assertEquals(10, count($agent->clients));
+
+        $this->expectException(BadRequestException::class);
+
+        $controller->Api
+            ->allowAll(false)
+            ->use('Agents')
+            ->find()
+            ->first();
+    }
+
     public function testBasicContain(): void
     {
         $agents = AgentFactory::make(5)->withClients(null, 10)->persist();
