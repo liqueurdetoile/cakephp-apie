@@ -1,3 +1,7 @@
+![CI](https://github.com/liqueurdetoile/cakephp-apie/actions/workflows/ci.yml/badge.svg)
+[![Coverage Status](https://coveralls.io/repos/github/liqueurdetoile/cakephp-apie/badge.svg)](https://coveralls.io/github/liqueurdetoile/cakephp-apie)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
+
 <p align="center"><a href="https://liqueurdetoile.com" target="\_blank"><img src="https://hosting.liqueurdetoile.com/logo_lqdt.png" alt="Liqueur de Toile"></a></p>
 
 # Cake as a Pie
