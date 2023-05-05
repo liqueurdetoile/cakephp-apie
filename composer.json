@@ -35,5 +35,9 @@
       "dealerdirect/phpcodesniffer-composer-installer": true,
       "phpstan/extension-installer": true
     }
+  },
+  "scripts": {
+    "test": "vendor/bin/phpunit",
+    "stan": "vendor/bin/phpstan analyse --memory-limit 1G"
   }
 }
