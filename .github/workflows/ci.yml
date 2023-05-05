@@ -32,6 +32,7 @@ jobs:
         with:
           php-version: ${{ matrix.php-version }}
           extensions: pdo_sqlite
+          tools: cs2pr
           coverage: ${{ matrix.coverage }}
 
       - name: Validate composer.json and composer.lock
