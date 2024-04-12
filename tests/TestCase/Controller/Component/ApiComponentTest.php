@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace Lqdt\CakephpApie\Test\TestCase\Controller\Component;
 
 use Lqdt\CakephpApie\Controller\Component\ApiComponent;
+use Lqdt\CakephpApie\Test\Factory\ClientFactory;
 use Lqdt\CakephpApie\Test\TestCase\ApiTestCase;
 
 class ApiComponentTest extends ApiTestCase
@@ -12,6 +13,19 @@ class ApiComponentTest extends ApiTestCase
     {
         $controller = $this->getQueryController([]);
         $this->assertInstanceOf(ApiComponent::class, $controller->Api);
+    }
+
+    public function testEmptyWithDescriptor(): void
+    {
+        /** @var \Lqdt\CakephpApie\Test\Model\Entity\TestEntityInterface[] $clients */
+        $clients = ClientFactory::make(20)->persist();
+        $controller = $this->getQueryController(null);
+
+        $q = $controller->Api
+            ->use('Clients')
+            ->find();
+
+        $this->assertEquals(20, $q->count());
     }
 
     public function isAllowedData(): array
