@@ -11,6 +11,7 @@ use Cake\Datasource\EntityInterface;
  * @property int $count
  * @property TestEntityInterface[] $clients
  * @property TestEntityInterface[] $agents
+ * @phpstan-require-extends \Cake\ORM\Entity
  */
 interface TestEntityInterface extends EntityInterface
 {
