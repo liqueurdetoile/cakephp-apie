@@ -178,6 +178,10 @@ class ApiComponent extends Component
         $q = $this->_getRequest()->getQuery($this->_queryParam) ?? '{}';
         $descriptor = json_decode($q, true);
 
+        if (!is_array($descriptor)) {
+            return $query;
+        }
+
         $this->configure($query, $descriptor);
 
         return $query;

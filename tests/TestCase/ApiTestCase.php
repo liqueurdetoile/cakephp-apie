@@ -40,12 +40,16 @@ class ApiTestCase extends TestCase
         ]);
     }
 
-    public function getQueryParam(array $q): string
+    public function getQueryParam(?array $q): string
     {
+        if ($q == null) {
+            return 'null';
+        }
+
         return urlencode((string)json_encode($q));
     }
 
-    public function getQueryRequest(array $q): ServerRequest
+    public function getQueryRequest(?array $q): ServerRequest
     {
         return $this->getRequest('/?q=' . $this->getQueryParam($q));
     }
@@ -58,7 +62,7 @@ class ApiTestCase extends TestCase
         return $controller;
     }
 
-    public function getQueryController(array $q, array $options = []): ApiController
+    public function getQueryController(?array $q, array $options = []): ApiController
     {
         $request = $this->getQueryRequest($q);
 
