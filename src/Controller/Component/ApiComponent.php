@@ -6,6 +6,7 @@ namespace Lqdt\CakephpApie\Controller\Component;
 use Cake\Controller\Component;
 use Cake\Database\Expression\FunctionExpression;
 use Cake\Database\Expression\QueryExpression;
+use Cake\Datasource\QueryInterface;
 use Cake\Http\Exception\BadRequestException;
 use Cake\Http\ServerRequest;
 use Cake\ORM\Locator\LocatorAwareTrait;
@@ -169,9 +170,9 @@ class ApiComponent extends Component
      *
      * @param string $type  Finder to use
      * @param array<string, mixed> $options Options for query
-     * @return \Cake\ORM\Query Initialized query
+     * @return \Cake\Datasource\QueryInterface Initialized query
      */
-    public function find(string $type = 'all', array $options = []): Query
+    public function find(string $type = 'all', array $options = []): QueryInterface
     {
         $query = $this->getModel()->find($type, $options);
         /** @var string $q */
@@ -192,9 +193,9 @@ class ApiComponent extends Component
      *
      * @param \Cake\ORM\Query $query Query to configure
      * @param array $descriptor Query descriptor
-     * @return \Cake\ORM\Query Configured query
+     * @return \Cake\Datasource\QueryInterface Configured query
      */
-    public function configure(Query &$query, array $descriptor): Query
+    public function configure(Query &$query, array $descriptor): QueryInterface
     {
         foreach ($descriptor as $key => $nodes) {
             $key = trim($key, '+');
